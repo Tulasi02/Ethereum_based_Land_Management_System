@@ -9,7 +9,6 @@ contract Land {
     struct User {
         address id;
         string name;
-        uint age;
         string email;
         bool isMember;
     }
@@ -28,8 +27,8 @@ contract Land {
         owner = msg.sender;
     }
 
-    function addUser(address _id, string memory _name, uint _age, string memory _email) public {
-        Users[_id] = User(_id, _name, _age, _email, true);
+    function addUser(address _id, string memory _name, string memory _email) public {
+        Users[_id] = User(_id, _name, _email, true);
     }
 
     function getUser(address _id) public view returns (User memory) {//address, string memory, uint, string memory, bool) {
