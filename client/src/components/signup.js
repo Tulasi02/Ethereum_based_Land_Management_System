@@ -4,21 +4,18 @@ const SignUp = () => {
 
   const [walletConnected, setWalletConnected] = useState(false);
   
-  const handleChange = () => {
-
-  }
-
   const handleWallet = async () => {
     console.log("Connect to Metamask");
     if (window.ethereum) {
-      const account = await window.ethereum.request({method: 'eth_requestAccounts'}).then (response => response[0]);
-      if (account) {
-        document.getElementById("walletcn").innerHTML = "Connected";
-        setWalletConnected(true);
-      }
-      else {
-        alert("Some error occured try again.");
-      }
+      await window.ethereum.request({method: 'eth_requestAccounts'}).then (response => {
+        if (response) {
+          document.getElementById("walletcn").innerHTML = "Connected";
+          setWalletConnected(true);
+        }
+        else {
+          alert("Some error occured try again.");
+        }
+      });
     }
     else {
       alert("Please install Metamask");
@@ -42,7 +39,6 @@ const SignUp = () => {
           type="text"
           className="form-control"
           placeholder="Name"
-          onChange={handleChange}
           required
         />
       </div>
@@ -53,21 +49,19 @@ const SignUp = () => {
           type="email"
           className="form-control"
           placeholder="Enter email"
-          onChange={handleChange}
           required
         />
       </div>
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <label>Password</label>
         <input
           id="password"
           type="password"
           className="form-control"
           placeholder="Enter password"
-          onChange={handleChange}
           required
         />
-      </div>
+      </div> */}
       <div className="mb-3 d-grid">
         <button type="button" id="walletcn" className="btn btn-dark" onClick={handleWallet}>Connect to Metamask</button>
       </div>
