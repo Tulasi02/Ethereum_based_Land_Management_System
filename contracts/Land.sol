@@ -31,13 +31,12 @@ contract Land {
         Users[_id] = User(_id, _name, _email, true);
     }
 
-    function getUser(address _id) public view returns (User memory) {//address, string memory, uint, string memory, bool) {
-        if (Users[_id].isMember) {
-            // return (Users[_id].id, Users[_id].name, Users[_id].age, Users[_id].email, Users[_id].isMember);
-            return Users[_id];
-        }
-        revert("Member does not exist");
-    }
+    // function getUser(address _id) public view returns (address, string memory, string memory, bool) {//address, string memory, uint, string memory, bool) {
+    //     if (Users[_id].isMember) {
+    //         return (Users[_id].id, Users[_id].name, Users[_id].email, Users[_id].isMember);
+    //     }
+    //     revert("Member does not exist");
+    // }
 
 
 

@@ -41,6 +41,8 @@
  * https://trufflesuite.com/docs/truffle/getting-started/using-the-truffle-dashboard/
  */
 
+const path = require("path");
+
 // require('dotenv').config();
 // const { MNEMONIC, PROJECT_ID } = process.env;
 
@@ -56,6 +58,8 @@ module.exports = {
    *
    * $ truffle test --network <network-name>
    */
+
+  contracts_build_directory: path.join(__dirname, "client/src/contracts"),
 
   networks: {
     // Useful for testing. The `development` name is special - truffle uses it by default
