@@ -16,14 +16,14 @@ function App() {
               Land Management System
             </Link>
             <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
-              <ul className="navbar-nav ms-auto">
+              <ul id = "navbar" className="navbar-nav ms-auto">
                 <li className="nav-item">
-                  <Link className="nav-link" style={{color: "black"}} to={'/sign-in'}>
+                  <Link className="nav-link" style={{color: "black"}} to={'/login'}>
                     Login
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" style={{color: "black"}} to={'/sign-up'}>
+                  <Link className="nav-link" style={{color: "black"}} to={'/signup'}>
                     Sign up
                   </Link>
                 </li>
