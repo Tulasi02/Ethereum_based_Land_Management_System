@@ -1,28 +1,21 @@
-import React, {useState} from 'react'
+import React from 'react';
+import Web3 from 'web3';
+import Land from '../contracts/Land.json';
 
 const Login = () => {
 
-  const [walletConnected, setWalletConnected] = useState(false);
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   const {email, password} = e.target.elements;
-  //   console.log(email.value, password.value);
-  // }
-
   const handleWallet = async () => {
-    console.log("Connect to Metamask");
+    console.log("Login");
     if (window.ethereum) {
-      await window.ethereum.request({method: 'eth_requestAccounts'}).then (response => {
-        if (response) {
-          document.getElementById("walletcn").innerHTML = "Connected";
-          setWalletConnected(true);
-          window.location = '/';
-        }
-        else {
-          alert("Some error occured try again.");
-        }
-      });
+      const web3 = new Web3(window.ethereum);
+      const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+      const networkId = await web3.eth.net.getId()
+      const address = Land.networks[networkId].address;
+      const contract = new web3.eth.Contract(Land.abi, address);
+      const user = await contract.methods.Users(account[0].toString()).call();
+      if (user.isMember) {
+        window.location = '/';
+      }
     }
     else {
       alert("Please install Metamask");
@@ -30,41 +23,12 @@ const Login = () => {
   }
 
   return (
-    // <form onSubmit={handleSubmit}>
-    //   <h3>Login In</h3>
-    //   <div className="mb-3">
-    //     <label>Email address</label>
-    //     <input
-    //       id="email"
-    //       type="email"
-    //       className="form-control"
-    //       placeholder="Enter email"
-    //     />
-    //   </div>
-    //   {/* <div className="mb-3">
-    //     <label>Password</label>
-    //     <input
-    //       id="password"
-    //       type="password"
-    //       className="form-control"
-    //       placeholder="Enter password"
-    //     />
-    //   </div> */}
-    //   <div className="d-grid">
-    //     <button type="submit" className="btn btn-primary">
-    //       Submit
-    //     </button>
-    //   </div>
-    //   <p className="forgot-password text-right">
-    //     Forgot <a href="/#">password?</a>
-    //   </p>
-    //   <p>
-    //     No account? <a href="/signup">Sign Up</a>
-    //   </p>
-    // </form>
     <div>
       <h2>Login</h2>
-      <button type="button" id="walletcn" className="btn btn-dark" onClick={handleWallet}>Connect to Metamask to Login</button>
+      <button type="button" id="walletcn" className="btn btn-dark md-3" onClick={handleWallet}>Connect to Metamask to Login</button>
+      <p className="md-3">
+        Haven't registered? <a href="/signup">Sign Up</a>
+      </p>
     </div>
   )
 }
