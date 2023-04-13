@@ -13,29 +13,43 @@ const Home = () => {
             const networkId = await web3.eth.net.getId()
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
-            const userData = await contract.methods.Users(account[0].toString()).call();
+            const userData = await contract.methods.Users(account[0]).call();
             setUser(userData);
         }
         func();
     }, []);
 
+    const handleProcess = () => {
+        console.log("Process");
+        window.location = "/process";
+    }
+
     const handleRegister = () => {
         console.log("Register");
+        window.location = '/register';
     };
 
     const handleSearch = () => {
         console.log("Search");
+        window.location = '/search';
     };
 
     const handleSell = () => {
         console.log("Sell");
+        window.location = '/sell';
     };
-    
+
     if (user.isMember) {
         document.getElementById("navbar").innerHTML = '<li className="nav-item"><p>' + user.id + '</p></li>';
 
         return (
             <div>
+                {user.isOfficial && 
+                    (<div>
+                       <h4>Process Land requests</h4>
+                        <button type="button" className="btn btn-primary" onClick={handleProcess}>Process</button> 
+                    </div>)
+                } 
                 <div>
                     <h4>Register a property</h4>
                     <button type="button" className="btn btn-primary" onClick={handleRegister}>Register</button>

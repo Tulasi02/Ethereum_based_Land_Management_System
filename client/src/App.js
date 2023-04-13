@@ -5,6 +5,10 @@ import './App.css';
 import Home from './components/home';
 import SignUp from './components/signup';
 import Login from './components/login';
+import Register from './components/register';
+import SearchLand from './components/searchLand';
+import SellLand from './components/sellLand';
+import Process  from './components/process';
 
 function App() {
   return (
@@ -12,9 +16,11 @@ function App() {
       <div className="App">
         <nav className="navbar navbar-expand-lg navbar-light fixed-top">
           <div className="container">
-            <Link className="navbar-brand" to={'/'}>
-              Land Management System
-            </Link>
+            <h1>
+              <Link className="navbar-brand" to={'/'}>
+                Land Management System
+              </Link>
+            </h1>
             <div className="collapse navbar-collapse" id="navbarTogglerDemo02">
               <ul id = "navbar" className="navbar-nav ms-auto">
                 <li className="nav-item">
@@ -37,6 +43,10 @@ function App() {
               <Route exact path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/search" element={<SearchLand />} />
+              <Route path="/sell" element={<SellLand />} />
+              <Route path="/process" element={<Process />} />
             </Routes>
           </div>
         </div>

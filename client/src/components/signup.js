@@ -5,16 +5,21 @@ import Web3 from 'web3';
 const SignUp = () => {
 
   const [account, setAccount] = useState('');
-
-  const addUser = async (name, email,account) => {
-    console.log("Add User");
+  
+  const callAddUser = async (name, email, account, govtId) => {
     const web3 = new Web3(window.ethereum);
     const networkId = await web3.eth.net.getId()
     const address = Land.networks[networkId].address;
     const contract = new web3.eth.Contract(Land.abi, address);
-    await contract.methods.addUser(account, name, email).send({from: account});
-    document.getElementById("output").innerHTML = 'Successfully registered <a href="/login">Login</a>';
-    document.getElementById("submit").disabled = true;
+    const user = await contract.methods.Users(account).call();
+    if (user.isMember) {
+      document.getElementById("output").innerHTML = 'Already a Registered User , try <a href="/login">Login</a> instead';
+    }
+    else {
+      await contract.methods.addUser(account, name, email, govtId).send({from: account});
+      document.getElementById("output").innerHTML = 'Successfully registered <a href="/login">Login</a>';
+      document.getElementById("submit").disabled = true;
+    }
   };
 
   const handleWallet = async () => {
@@ -24,6 +29,7 @@ const SignUp = () => {
         if (response) {
           document.getElementById("walletcn").innerHTML = "Connected";
           setAccount(String(response));
+          console.log(account);
         }
         else {
           alert("Some error occured try again.");
@@ -37,11 +43,8 @@ const SignUp = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const {name, email} = e.target.elements;
-    if (!window.ethereum.isConnected()) {
-      console.log("Error");
-    }
-    addUser(name.value, email.value, account);
+    const {name, email, govtId} = e.target.elements;
+    callAddUser(name.value, email.value, account, govtId.value);
   }
 
   return (
@@ -67,16 +70,15 @@ const SignUp = () => {
           required
         />
       </div>
-      {/* <div className="mb-3">
-        <label>Password</label>
+      <div className="mb-3">
+        <label>Government Id (optional)</label>
         <input
-          id="password"
-          type="password"
+          id="govtId"
+          type="text"
           className="form-control"
-          placeholder="Enter password"
-          required
+          placeholder="Enter Government Id if official"
         />
-      </div> */}
+      </div>
       <div className="mb-3 d-grid">
         <button type="button" id="walletcn" className="btn btn-dark" onClick={handleWallet}>Connect to Metamask</button>
       </div>
@@ -85,9 +87,6 @@ const SignUp = () => {
           Sign Up
         </button>
       </div>
-      <p className="forgot-password text-right">
-        Already registered? <a href="/login">Login</a>
-      </p>
       <p id="output" className="mb-3" />
     </form>
   )
