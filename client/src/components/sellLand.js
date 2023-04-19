@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
+import { FileEarmarkFill } from 'react-bootstrap-icons';
 
 const SellLand = () => {
     const [user, setUser] = useState({name: '', id: '', email: '', isMember: false});
     const [lands, setLands] = useState([]);
-    const [onSale, setOnSale] = useState([]);
+
+    const Status = {0: "Registered", 1: "Approved", 2: "Rejected"};
     
     useEffect(() => {
         const func = async () => {
@@ -14,40 +16,58 @@ const SellLand = () => {
             const networkId = await web3.eth.net.getId()
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
-            const userData = await contract.methods.getUser(account[0]).call();
-            // const landData = await contract.methods.getLands().call();
+            const userData = await contract.methods.Users(account[0]).call();
             setUser(userData);
-            // setLands(landData);
+            const assets = await contract.methods.getUserAssets(account[0]).call();
+            let land;
+            for (let i = 0; i < assets.length; i++) {
+                land = await contract.methods.Lands(assets[i]).call();
+                setLands([...lands, land]);
+            }
         }
         func();
     }, []);
 
-    const handleSale = async () => {
+    const handleSell = async (id) => {
+        const web3 = new Web3(window.ethereum);
+        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+        const networkId = await web3.eth.net.getId()
+        const address = Land.networks[networkId].address;
+        const contract = new web3.eth.Contract(Land.abi, address);
+        await contract.methods.auctionLand(id).send({from: account[0]});
+        console.log(await contract.methods.Lands(id).call());
+    }
 
-    };
+    const TableRow = ({data}) => {
+        return data.map((data, i) => 
+            <tr key={i}>
+                <td>{i + 1}</td>
+                <td>{data.landAddress}</td>
+                <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
+                <td>{data.price}</td>
+                <td>{Status[data.status]}</td>
+                <td><button type="button" className='btn btn-primary' onClick={() => handleSell(data.id)} disabled={data.status === '1' && data.sell === false ? false : true}>Sell</button></td>
+            </tr>
+        );
+    }
 
     return (
         <div>
             <h1>Put up your land for sale</h1>
-            <table>
-                <tr>
-                    <th>Land Id</th>
-                    <th>Address</th>
-                    <th>Document</th>
-                    <th>Price</th>
-                    <th></th>
-                </tr>
-                {
-                    lands.map(land => (
-                        <tr>
-                            <td>{land.id}</td>
-                            <td>{land.address}</td>
-                            <td>{land.ipfsHash}</td>
-                            <td>{land.price}</td>
-                            <td><button id="sale" type="button" className="btn btn-primary" onClick={handleSale}>Request</button></td>
-                        </tr>
-                    ))
-                }
+            <table className="table table-bordered text-center">
+                <thead className='thead-dark'>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Address</th>
+                        <th>Document</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <TableRow data={lands} />
+                </tbody>
             </table>
         </div>
     );

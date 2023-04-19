@@ -33,10 +33,9 @@ contract Land {
         string landAddress;
         uint price;
         string ipfsHash;
+        string ownerName;
         address ownerAccount;
         LandStatus status;
-        uint approved;
-        uint rejected;
         bool sell;
     }
 
@@ -47,7 +46,7 @@ contract Land {
     mapping(string => address[]) public InterestedBuyers;
     mapping(address => mapping(string => RequestStatus)) public LandRequestAccess;
     mapping(LandStatus => string[]) Status;
-    
+
     string[] public LandsforSale;
 
     constructor() {
@@ -68,29 +67,31 @@ contract Land {
     }
 
     function registerLand(string memory _id, string memory _landAddress, uint _price, string memory _ipfsHash, address _ownerAccount) public {
-        Lands[_id] = LandDetails(_id, _landAddress, _price, _ipfsHash, _ownerAccount, LandStatus.Registered, 0, 0, false);
+        Lands[_id] = LandDetails(_id, _landAddress, _price, _ipfsHash, Users[_ownerAccount].name, _ownerAccount, LandStatus.Registered, false);
         UserAssets[_ownerAccount].push(_id);
         Status[LandStatus.Registered].push(_id);
     }
 
-    function checkStatus(string memory _id) private {
-        if (Lands[_id].approved > (countOfGovtOfficials / 2)) {
-            Lands[_id].status = LandStatus.Approved;
-            Status[LandStatus.Approved].push(_id);
-        } else if (Lands[_id].rejected >= (countOfGovtOfficials / 2)) {
-            Lands[_id].status = LandStatus.Rejected;
-            Status[LandStatus.Rejected].push(_id);
+    function removeFromRegistered(string memory _id) private {
+        for (uint i = 0; i < Status[LandStatus.Registered].length; i++) {
+            if (keccak256(abi.encodePacked(Status[LandStatus.Registered][i])) == keccak256(abi.encodePacked(_id))) {
+                Status[LandStatus.Registered][i] = Status[LandStatus.Registered][Status[LandStatus.Registered].length - 1];
+                break;
+            }
         }
+        Status[LandStatus.Registered].pop();
     }
 
     function changeStatus(string[] memory _approvedLands, string[] memory _rejectedLands) public {
         for (uint i = 0; i < _approvedLands.length; i++) {
-            Lands[_approvedLands[i]].approved++;
-            checkStatus(_approvedLands[i]);
+            Lands[_approvedLands[i]].status = LandStatus.Approved;
+            Status[LandStatus.Approved].push(_approvedLands[i]);
+            removeFromRegistered(_approvedLands[i]);
         }
         for (uint i = 0; i < _rejectedLands.length; i++) {
-            Lands[_rejectedLands[i]].rejected++;
-            checkStatus(_rejectedLands[i]);
+            Lands[_rejectedLands[i]].status = LandStatus.Rejected;
+            Status[LandStatus.Rejected].push(_rejectedLands[i]);
+            removeFromRegistered(_rejectedLands[i]);
         }
     }
 
@@ -103,6 +104,10 @@ contract Land {
 
     function getAllLandsforSale() public view returns (string[] memory) {
         return LandsforSale;
+    }
+
+    function getUserAssets(address _id) public view returns (string[] memory) {
+        return UserAssets[_id];
     }
 
     function requestLandDetails(string memory _id, address _account) public {
@@ -135,6 +140,16 @@ contract Land {
         }
     }
 
+    function removeFromLandForSale(string memory _id) private {
+        for (uint i = 0; i < LandsforSale.length; i++) {
+            if (keccak256(abi.encodePacked(LandsforSale[i])) == keccak256(abi.encodePacked(_id))) {
+                LandsforSale[i] = LandsforSale[LandsforSale.length - 1];
+                break;
+            }
+        }
+        LandsforSale.pop();
+    }
+
     function changeOwnership(string memory _id, address _oldAccount, address _newAccount, bool _transfered) public {
         if (_transfered) {
             Lands[_id].ownerAccount = _newAccount;
@@ -142,6 +157,8 @@ contract Land {
             UserAssets[_newAccount].push(_id);
             removeRequestAccess(_id);
             delete InterestedBuyers[_id];
+            removeFromLandForSale(_id);
+            Lands[_id].sell = false;
         }
     }
 }

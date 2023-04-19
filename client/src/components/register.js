@@ -42,6 +42,7 @@ const Register = () => {
         const file = files[0];
         const result = await ipfs.add(file);
         setLandDoc(result.path);
+        console.log(landDoc);
         document.getElementById("upload").innerHTML = "Uploaded";
     }
 
@@ -55,14 +56,10 @@ const Register = () => {
         const networkId = await web3.eth.net.getId()
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        console.log(id, formAddress.value, price.value, landDoc[0], formAccount.value);
+        console.log(id, formAddress.value, price.value, landDoc, formAccount.value);
         await contract.methods.registerLand(id.toString(), formAddress.value.toString(), price.value, landDoc, formAccount.value).send({from: account[0]});
         setOutput("Successfully registered");
         document.getElementById("submit").disabled = true;
-    }
-
-    if (user.isMember) {
-        document.getElementById("navbar").innerHTML = '<li className="nav-item"><p>' + user.id + '</p></li>';
     }
 
     return (

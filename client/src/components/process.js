@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
+import { FileEarmarkFill } from "react-bootstrap-icons";
 
 const Process = () => {
-
+    
     const [lands, setLands] = useState([]);
     const [register, setRegister] = useState([]);
     const [approved, setApproved] = useState([]);
@@ -12,7 +13,8 @@ const Process = () => {
     useEffect(() => {
         const func = async () => {
             const web3 = new Web3(window.ethereum);
-            const networkId = await web3.eth.net.getId()
+            const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+            const networkId = await web3.eth.net.getId();
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
             const registered = await contract.methods.getRegisteredLands().call();
@@ -20,75 +22,74 @@ const Process = () => {
             let land;
             for (let i = 0; i < registered.length; i++) {
                 land = await contract.methods.Lands(registered[i]).call();
-                setLands([...lands, land]);
+                if (land.ownerAccount.toString().toUpperCase() !== account[0].toString().toUpperCase() && land.status === '0') {
+                    setLands([...lands, land]);
+                }
             }
         }
         func();
     }, []);
 
-    // const handleApprove = (id) => {
-    //     setApproved([...approved, id]);
-    // }
+    const handleSubmit = async () => {
+        const web3 = new Web3(window.ethereum);
+        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+        const networkId = await web3.eth.net.getId()
+        const address = Land.networks[networkId].address;
+        const contract = new web3.eth.Contract(Land.abi, address);  
+        await contract.methods.changeStatus(approved, rejected).send({from: account[0]});
+        window.location = "/process";
+    }
 
-    // const handleReject = (id) => {
-    //     setRejected([...rejected, id]);
-    // }
-
-    // const handleSubmit = async () => {
-    //     const web3 = new Web3(window.ethereum);
-    //     const account = await window.ethereum.request({method: 'eth_requestAccounts'});
-    //     const networkId = await web3.eth.net.getId()
-    //     const address = Land.networks[networkId].address;
-    //     const contract = new web3.eth.Contract(Land.abi, address);
-    //     // const registered = await contract.methods.changeStatus(approved, rejected).from({account: 'status'});
-    //     // console.log(registered);
-    // }
-
-    const handleChange = (id, e) => {
-        console.log(id, e.value);
+    const handleChange = (e, i) => {
+        console.log(e, i);
+        if (e == "Approve") {
+            setApproved([...approved, i]);
+        }
+        else if (e === "Reject") {
+            setRejected([...rejected, i]);
+        }
+        document.getElementById("s").value = e;
     };
 
     const TableRow = ({data}) => {
         return data.map((data, i) => 
             <tr key={i}>
-                <td>{data.id}</td>
+                <td>{i + 1}</td>
+                <td>{data.ownerName}</td>
                 <td>{data.landAddress}</td>
-                <td>{data.ipfsHash}</td>
+                <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
                 <td>{data.price}</td>
-                <td>{data.ownerAccount}</td>
-                <td><select className="bootstrap-select" onSelect={e => handleChange(data.id, this)}>
-                    <option value="0" selected="selected">Registered</option>
-                    <option value="1">Approve</option>
-                    <option value="2">Reject</option>
+                <td><select id="s" className="bootstrap-select" onChange={e => handleChange(e.target.value, data.id)}>
+                    <option value="">Select</option>
+                    <option value="Approve">Approve</option>
+                    <option value="Reject">Reject</option>
                 </select></td>
             </tr>
         );
     }
 
-    return (
-        <div>
-            <h1>Process Land Register Request</h1>
-            {/* {(register.length > 0 && lands.length > 0) && (
-                <AgGridReact
-                columnDefs={columnDefs}
-                rowData={lands} />
-            )}  */}
+    const css = {
+    };
 
-            <table>
-                <thead>
+    return (
+        <div style={css}>
+            <h1>Process Land Register Request</h1>
+            <table className="table table-bordered text-center">
+                <thead className='thead-dark'>
                     <tr>
-                        <th>Id</th>
-                        <th>Address</th>
-                        <th>Document</th>
-                        <th>Price</th>
-                        <th>Owner</th>
-                        <th>Status</th>
+                        <th>S.No</th>
+                        <th scope="col">Owner</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Document</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     <TableRow data={lands} />
                 </tbody>
             </table>
+            <button type="button" className='btn btn-primary' onClick={handleSubmit}>Change Status</button>
         </div>
     );
 };

@@ -40,8 +40,6 @@ const Home = () => {
     };
 
     if (user.isMember) {
-        document.getElementById("navbar").innerHTML = '<li className="nav-item"><p>' + user.id + '</p></li>';
-
         return (
             <div>
                 {user.isOfficial && 
