@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
 import { FileEarmarkFill } from "react-bootstrap-icons";
+// import Select from 'react-select';
 
 const Process = () => {
-    
+
+    const [user, setUser] = useState();   
     const [lands, setLands] = useState([]);
     const [register, setRegister] = useState([]);
     const [approved, setApproved] = useState([]);
@@ -17,6 +19,7 @@ const Process = () => {
             const networkId = await web3.eth.net.getId();
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
+            setUser(await contract.methods.Users(account[0]).call());
             const registered = await contract.methods.getRegisteredLands().call();
             setRegister([...register, ...registered]);
             let land;
@@ -52,6 +55,7 @@ const Process = () => {
     };
 
     const TableRow = ({data}) => {
+        const options = [{value: "Approve", label: "Approve"}, {value: "Reject", label: "Reject"}];
         return data.map((data, i) => 
             <tr key={i}>
                 <td>{i + 1}</td>
@@ -59,7 +63,7 @@ const Process = () => {
                 <td>{data.landAddress}</td>
                 <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
                 <td>{data.price}</td>
-                <td><select id="s" className="bootstrap-select" onChange={e => handleChange(e.target.value, data.id)}>
+                <td><select id="s" value={{value: "one"}} className="bootstrap-select" onChange={e => handleChange(e.target.value, data.id)}>
                     <option value="">Select</option>
                     <option value="Approve">Approve</option>
                     <option value="Reject">Reject</option>
@@ -68,12 +72,13 @@ const Process = () => {
         );
     }
 
-    const css = {
-    };
+    if (user.isMember) {
+        document.getElementById("navbar").innerHTML="";
+    }
 
     return (
-        <div style={css}>
-            <h1>Process Land Register Request</h1>
+        <div>
+            <h1>Process Land Requests</h1>
             <table className="table table-bordered text-center">
                 <thead className='thead-dark'>
                     <tr>
