@@ -58,8 +58,8 @@ const OnSale = () => {
         const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        await contract.methods.sellLand(lands[selected].userIds[i], lands[selected].id).send({from: account[0]});
-        document.getElementById("sell").disabled = true;
+        await contract.methods.sellLand(lands[selected].id, lands[selected].userIds[i]).send({from: account[0]});
+        window.location = "/onSale";
     }
 
     const TableRow = ({data}) => {
@@ -74,7 +74,7 @@ const OnSale = () => {
                         <option value="Accepted">Approve</option>
                         <option value="Rejected">Reject</option>
                     </select></td>
-                    <td><button id="sell" type="button" className="btn btn-primary" onClick={() => handleSell(i)} disabled={access[i] === "Accepted" ? false : true}>Sell</button></td>
+                    <td><button id="sell" type="button" className="btn btn-primary" onClick={() => handleSell(i)} disabled={access[i] == "Accepted" ? false : true}>Sell</button></td>
                 </tr>
             );
         }
@@ -90,7 +90,7 @@ const OnSale = () => {
 
     return (
         <div>
-            <h1>Requested Lands</h1>
+            <h1>Lands on Sale</h1>
             <select className="bootstrap-select" onChange={handleChange}>
                 {lands.map((data, i) => (
                     <option value={i}>{data.id}</option>

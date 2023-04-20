@@ -72,7 +72,7 @@ const Process = () => {
         );
     }
 
-    if (user.isMember) {
+    if (user && user.isMember) {
         document.getElementById("navbar").innerHTML="";
     }
 

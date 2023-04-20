@@ -7,6 +7,7 @@ const RequestedLand = () => {
             
     const [user, setUser] = useState({name: '', id: '', email: '', isMember: false});
     const [lands, setLands] = useState([]);
+    const [buy, setBuy] = useState('');
 
     useEffect(() => {
         const func = async () => {
@@ -23,7 +24,10 @@ const RequestedLand = () => {
             for (let i = 0; i < requested.length; i++) {
                 land = await contract.methods.Lands(requested[i]).call();
                 land["access"] = accessForLands[i];
+                let users = await contract.methods.Users(land.ownerAccount).call();
+                land["email"] = users["email"];
                 setLands([...lands, land]);
+                console.log(user, land);
             }
         }
         func();
@@ -35,26 +39,32 @@ const RequestedLand = () => {
         const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        let transfer = web3.sendtransaction({to: owner, from: account[0], value: price}, async (err, data) => {
-            if (data) {
-                await contract.methods.changeOwnership(id, account[0]).send({from: account[0]});
+        setBuy(id);
+        let transfer = web3.eth.sendTransaction({from: account[0], to: owner, value: web3.utils.toWei(price, "ether")})
+        .then(async (res) => {
+            if (res) {
+                await contract.methods.changeOwnership(buy, account[0]).send({from: account[0]});
                 alert("Land Ownership transfer done successfully");
             }
         });
+        window.location = "/requestedLands";
     };
 
     const TableRow = ({data}) => {
-        return data.map((data, i) => 
-            <tr key={i}>
-                <td>{i + 1}</td>
-                <td>{data.ownerName}</td>
-                <td>{data.landAddress}</td>
-                <td>{data.price}</td>
-                <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
-                <td>{data.access}</td>
-                <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.ownerAccount, data.price)} disabled={data.access === "Sell" ? false : true}>Buy</button></td>
-            </tr>
-        );
+        if (data) {
+            return data.map((data, i) => 
+                <tr key={i}>
+                    <td>{i + 1}</td>
+                    <td>{data.ownerName}</td>
+                    <td>{data.landAddress}</td>
+                    <td>{data.price}</td>
+                    <td>{(data.access == "Accepted" || data.access == "Sell") ? data.email : ""}</td>
+                    <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank" disabled={(data.access == "Accepted" || data.access == "Sell") ? false : true}><FileEarmarkFill /></a></td>
+                    <td>{data.access}</td>
+                    <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.ownerAccount, data.price)} disabled={data.access === "Sell" ? false : true}>Buy</button></td>
+                </tr>
+            );
+        }
     }
 
     if (user.isMember) {
@@ -71,6 +81,7 @@ const RequestedLand = () => {
                         <th scope="col">Owner</th>
                         <th scope="col">Address</th>
                         <th scope="col">Price</th>
+                        <th scope="col">Email</th>
                         <th scope="col">Document</th>
                         <th scope="col">Access</th>
                         <th scope="col">Buy</th>

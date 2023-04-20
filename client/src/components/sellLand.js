@@ -35,6 +35,7 @@ const SellLand = () => {
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
         await contract.methods.auctionLand(id).send({from: account[0]});
+        document.getElementById("s").innerHTML="OnSale";
         // window.location = 
     }
 
@@ -46,7 +47,7 @@ const SellLand = () => {
                 <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
                 <td>{data.price}</td>
                 <td>{Status[data.status]}</td>
-                <td><button type="button" className='btn btn-primary' onClick={() => handleSell(data.id)} disabled={data.status === '1' && data.sell === false ? false : true}>{data.sell === false? "Sell" : "onSale"}</button></td>
+                <td><button id="s" type="button" className='btn btn-primary' onClick={() => handleSell(data.id)} disabled={data.status === '1' && data.sell === false ? false : true}>{data.sell == false ? "Sell" : "OnSale"}</button></td>
             </tr>
         );
     }
