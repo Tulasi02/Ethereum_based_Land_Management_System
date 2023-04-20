@@ -48,7 +48,7 @@ const SignUp = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form style={{width: '300px'}} onSubmit={handleSubmit}>
       <h3>Sign Up</h3>
       <div className="mb-3">
         <label>Name</label>

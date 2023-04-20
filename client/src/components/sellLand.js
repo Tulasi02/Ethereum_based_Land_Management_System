@@ -35,7 +35,7 @@ const SellLand = () => {
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
         await contract.methods.auctionLand(id).send({from: account[0]});
-        console.log(await contract.methods.Lands(id).call());
+        // window.location = 
     }
 
     const TableRow = ({data}) => {
@@ -46,9 +46,13 @@ const SellLand = () => {
                 <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a></td>
                 <td>{data.price}</td>
                 <td>{Status[data.status]}</td>
-                <td><button type="button" className='btn btn-primary' onClick={() => handleSell(data.id)} disabled={data.status === '1' && data.sell === false ? false : true}>Sell</button></td>
+                <td><button type="button" className='btn btn-primary' onClick={() => handleSell(data.id)} disabled={data.status === '1' && data.sell === false ? false : true}>{data.sell === false? "Sell" : "onSale"}</button></td>
             </tr>
         );
+    }
+
+    if (user.isMember) {
+        document.getElementById("navbar").innerHTML="";
     }
 
     return (
@@ -57,12 +61,12 @@ const SellLand = () => {
             <table className="table table-bordered text-center">
                 <thead className='thead-dark'>
                     <tr>
-                        <th>S.No</th>
-                        <th>Address</th>
-                        <th>Document</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th scope="col">S.No</th>
+                        <th scope="col">Address</th>
+                        <th scope="col">Document</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"></th>
                     </tr>
                 </thead>
                 <tbody>

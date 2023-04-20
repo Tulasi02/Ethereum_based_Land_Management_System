@@ -39,7 +39,16 @@ const Home = () => {
         window.location = '/sell';
     };
 
+    const handleRequest = () => {
+        window.location = "/requested";
+    }
+
+    const handleSale = () => {
+        window.location = "/onsale";
+    }
+
     if (user.isMember) {
+        document.getElementById("navbar").innerHTML="";
         return (
             <div>
                 {user.isOfficial && 
@@ -60,6 +69,14 @@ const Home = () => {
                     <h4>Sell a property</h4>
                     <button type="button" className="btn btn-primary" onClick={handleSell}>Sell</button>
                 </div>
+                <div>
+                    <h4>Requested Lands</h4>
+                    <button type="button" className="btn btn-primary" onClick={handleRequest}>Requested</button>
+                </div>
+                <div>
+                    <h4>My Lands on Sale</h4>
+                    <button type="button" className="btn btn-primary" onClick={handleSale}>Lands</button>
+                </div>
             </div>
         );
 
@@ -69,7 +86,7 @@ const Home = () => {
             <div>
                 <h1>Land Management System</h1>
                 <br />
-                <p>This is a Ethereum based application which helps in property management. It connects to the users Metamask account which can be given during signup and cannot be changed further.</p>
+                <p>This is a Ethereum based application which helps in property management. It connects to the users Metamask account which can be given during signup and cannot be changed further. You can register your land and then after it is approved transfer ownership online. You can also buy a land</p>
             </div>
         );
     }

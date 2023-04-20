@@ -9,6 +9,8 @@ import Register from './components/register';
 import SearchLand from './components/searchLand';
 import SellLand from './components/sellLand';
 import Process  from './components/process';
+import RequestedLand from './components/requestedLand';
+import OnSale from './components/onSale';
 
 function App() {
   return (
@@ -47,6 +49,8 @@ function App() {
               <Route path="/search" element={<SearchLand />} />
               <Route path="/sell" element={<SellLand />} />
               <Route path="/process" element={<Process />} />
+              <Route path="/requested" element={<RequestedLand />} />
+              <Route path="/onsale" element={<OnSale />} />
             </Routes>
           </div>
         </div>

@@ -32,6 +32,19 @@ const Register = () => {
         func();
     }, []); 
 
+    const check = async (ipfsHash) => {
+        const web3 = new Web3(window.ethereum);
+        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+        const networkId = await web3.eth.net.getId()
+        const address = Land.networks[networkId].address;
+        const contract = new web3.eth.Contract(Land.abi, address);
+        const exist = await contract.methods.ipfs(ipfsHash).call();
+        if (exist) {
+            alert("Same Land Document is Already Registered");
+            document.getElementbyId("submit").disabled = true;
+        }
+    }
+
     const handleUpload = async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -44,6 +57,7 @@ const Register = () => {
         setLandDoc(result.path);
         console.log(landDoc);
         document.getElementById("upload").innerHTML = "Uploaded";
+        check(result.path);
     }
 
     const handleRegister = async (e) => {
@@ -60,6 +74,10 @@ const Register = () => {
         await contract.methods.registerLand(id.toString(), formAddress.value.toString(), price.value, landDoc, formAccount.value).send({from: account[0]});
         setOutput("Successfully registered");
         document.getElementById("submit").disabled = true;
+    }
+
+    if (user.isMember) {
+        document.getElementById("navbar").innerHTML="";
     }
 
     return (
