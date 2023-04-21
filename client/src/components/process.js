@@ -2,9 +2,17 @@ import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
 import { FileEarmarkFill } from "react-bootstrap-icons";
-// import Select from 'react-select';
+import { useLocation, useNavigate } from 'react-router';
+import { ArrowLeft } from 'react-bootstrap-icons';
 
 const Process = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    let aadhaar;
+
+    if (location.state) {
+        aadhaar = location.state.aadhaar;
+    }
 
     const [user, setUser] = useState();   
     const [lands, setLands] = useState([]);
@@ -32,6 +40,10 @@ const Process = () => {
         }
         func();
     }, []);
+
+    const handleBack = () => {
+        navigate("/", {state: {aadhaar: aadhaar}});
+    }
 
     const handleSubmit = async () => {
         const web3 = new Web3(window.ethereum);
@@ -78,6 +90,8 @@ const Process = () => {
 
     return (
         <div>
+            <button type="button" className="btn btn-primary" onClick={() => handleBack()}><ArrowLeft /></button>
+            <br></br><br></br>
             <h1>Process Land Requests</h1>
             <table className="table table-bordered text-center">
                 <thead className='thead-dark'>

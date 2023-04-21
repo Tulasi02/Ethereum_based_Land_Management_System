@@ -3,11 +3,21 @@ import Web3 from 'web3';
 import { create as ipfsHttpClient} from 'ipfs-http-client';
 import { v4 as uuid } from 'uuid';
 import Land from '../contracts/Land.json';
+import { useLocation, useNavigate } from 'react-router';
+import { ArrowLeft } from 'react-bootstrap-icons';
 
 const Register = () => {
 
+    const navigate = useNavigate();
+    const location = useLocation();
+    let aadhaar;
+
+    if (location.state) {
+        aadhaar = location.state.aadhaar;
+    }
+
     const {REACT_APP_PROJECT_ID, REACT_APP_PROJECT_SECRET, REACT_APP_IPFS_API_ENDPOINT} = process.env;
-    const [user, setUser] = useState({name: '', id: '', email: '', isMember: false});
+    const [user, setUser] = useState();
     const [landDoc, setLandDoc] = useState('');
     const [output, setOutput] = useState('');
     const authorization = "Basic " + btoa(REACT_APP_PROJECT_ID + ":" + REACT_APP_PROJECT_SECRET);
@@ -26,27 +36,20 @@ const Register = () => {
             const networkId = await web3.eth.net.getId()
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
-            const userData = await contract.methods.Users(account[0]).call();
+            const userData = await contract.methods.Users(aadhaar).call();
             setUser(userData);
         }
         func();
     }, []); 
 
-    const check = async (ipfsHash) => {
-        const web3 = new Web3(window.ethereum);
-        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
-        const networkId = await web3.eth.net.getId()
-        const address = Land.networks[networkId].address;
-        const contract = new web3.eth.Contract(Land.abi, address);
-        const exist = await contract.methods.ipfs(ipfsHash).call();
-        if (exist) {
-            alert("Same Land Document is Already Registered");
-            document.getElementbyId("submit").disabled = true;
-        }
+    const handleBack = () => {
+        navigate("/", {state: {aadhaar: aadhaar}});
     }
 
-    const handleUpload = async (e) => {
+    const handleRegister = async (e) => {
+        console.log("Register");
         e.preventDefault();
+        const {formAddress, price, formAadhaar, share, registeredBy} = e.target.elements;
         const form = e.target;
         const files = (form[0]).files;
         if (!files || files.length === 0) {
@@ -55,23 +58,14 @@ const Register = () => {
         const file = files[0];
         const result = await ipfs.add(file);
         setLandDoc(result.path);
-        console.log(landDoc);
-        document.getElementById("upload").innerHTML = "Uploaded";
-        check(result.path);
-    }
-
-    const handleRegister = async (e) => {
-        console.log("Register");
-        e.preventDefault();
-        const {formAddress, price, formAccount} = e.target.elements;
+        let owners = formAadhaar.value.split(' ');
+        let shares = share.value.split(' ').map(Number);
         const id = uuid();
         const web3 = new Web3(window.ethereum);
-        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
         const networkId = await web3.eth.net.getId()
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        console.log(id, formAddress.value, price.value, landDoc, formAccount.value);
-        await contract.methods.registerLand(id.toString(), formAddress.value.toString(), price.value, landDoc, formAccount.value).send({from: account[0]});
+        await contract.methods.registerLand(id, formAddress.value, registeredBy.value, new Date(), price.value, result.path, owners, shares, (owners.length > 1 ? true : false)).send({from: registeredBy.value});
         setOutput("Successfully registered");
         document.getElementById("submit").disabled = true;
     }
@@ -81,19 +75,20 @@ const Register = () => {
     }
 
     return (
-        <div>
+        <div style={{width: '400px'}}>
+            <button type="button" className="btn btn-primary" onClick={() => handleBack()}><ArrowLeft /></button>
+            <br></br><br></br>
             <h2>Register Land</h2>
-            <form className="mb-3" onSubmit={handleUpload}>
-                <label>Upload Land Document</label>
-                <input
-                id="file" 
-                type="file" 
-                name="file" 
-                className="form-control"
-                required />
-                <button type="submit" id="upload" className="btn btn-primary">Upload</button>
-            </form>
             <form onSubmit={handleRegister}>
+                <div>
+                    <label>Upload Land Document</label>
+                    <input
+                    id="file" 
+                    type="file" 
+                    name="file" 
+                    className="form-control"
+                    required />
+                </div>
                 <div className="mb-3">
                     <label>Address</label>
                     <input
@@ -110,18 +105,38 @@ const Register = () => {
                     id="price"
                     type="text"
                     className="form-control"
-                    placeholder="Price (in Rupees)"
+                    placeholder="Price (in ETH)"
+                    required
+                    />
+                </div>
+                <div className="mb-3">
+                    <label>Owners Aadhaar</label>
+                    <input
+                    id="formAadhaar"
+                    type="text"
+                    className="form-control"
+                    placeholder="Owner aadhaar (if joint property use space to add all)"
+                    required
+                    />
+                </div>
+                <div className="mb-3">
+                    <label>Share (if joint property)</label>
+                    <input
+                    id="share"
+                    type="text"
+                    className="form-control"
+                    placeholder="Share in percentage (if joint property use space else 100)"
                     required
                     />
                 </div>
                 <div className="mb-3">
                     <label>Metamask account</label>
                     <input
-                    id="formAccount"
+                    id="registeredBy"
                     type="text"
                     className="form-control"
                     placeholder="Metamask account"
-                    value={user.id}
+                    value={user.account}
                     disabled
                     />
                 </div>

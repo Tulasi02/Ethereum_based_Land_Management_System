@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
+import { useNavigate , useLocation } from 'react-router-dom';
 
 const Home = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const [user, setUser] = useState({name: '', id: '', email: '', isMember: false});
+    let aadhaar;
+
+    if (location.state) {
+        aadhaar = location.state.aadhaar;
+    }
+
+    const [user, setUser] = useState();
 
     useEffect(() => {
         const func = async () => {
@@ -13,69 +22,80 @@ const Home = () => {
             const networkId = await web3.eth.net.getId()
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
-            const userData = await contract.methods.Users(account[0]).call();
+            const userData = await contract.methods.Users(aadhaar).call();
             setUser(userData);
         }
         func();
     }, []);
 
-    const handleProcess = () => {
-        console.log("Process");
-        window.location = "/process";
-    }
-
     const handleRegister = () => {
-        console.log("Register");
-        window.location = '/register';
+        navigate("/register", {state: {aadhaar: aadhaar}});
     };
 
     const handleSearch = () => {
-        console.log("Search");
-        window.location = '/search';
+        navigate("/search", {state: {aadhaar: aadhaar}});
     };
 
     const handleSell = () => {
-        console.log("Sell");
-        window.location = '/sell';
+        navigate("/sell", {state: {aadhaar: aadhaar}});
     };
 
     const handleRequest = () => {
-        window.location = "/requested";
+        navigate("/requested", {state: {aadhaar: aadhaar}});
     }
 
     const handleSale = () => {
-        window.location = "/onsale";
+        navigate("/onsale", {state: {aadhaar: aadhaar}});
+    }
+
+    const handleProcess = () => {
+        navigate("/process", {state: {aadhaar: aadhaar}});
+    }
+
+    const handleAdd = () => {
+        navigate("/add", {state: {aadhaar: aadhaar}});
     }
 
     if (user.isMember) {
         document.getElementById("navbar").innerHTML="";
         return (
-            <div>
+            <div style={{width: '300px'}}>
+                {user.isOfficial &&
+                    (<div>
+                        <h4>Add User</h4>
+                        <button type="button" className="btn btn-primary" onClick={() => handleAdd()}>Add</button>
+                    </div>)}
+                {user.isOfficial && <br></br>}
                 {user.isOfficial && 
                     (<div>
-                       <h4>Process Land requests</h4>
-                        <button type="button" className="btn btn-primary" onClick={handleProcess}>Process</button> 
-                    </div>)
-                } 
-                <div>
-                    <h4>Register a property</h4>
-                    <button type="button" className="btn btn-primary" onClick={handleRegister}>Register</button>
-                </div>
+                        <h4>Register a property</h4>
+                        <button type="button" className="btn btn-primary" onClick={() => handleRegister()}>Register</button>
+                    </div>)}
+                {user.isOfficial && <br></br>}
+                {user.isOfficial &&
+                    (<div>
+                        <h4>Process change of ownership transactions</h4>
+                        <button type="button" className="btn btn-primary" onClick={() => handleProcess()}>Process</button>
+                    </div>)}
+                <br></br> 
                 <div>
                     <h4>Buy Property</h4>
-                    <button type="button" className="btn btn-primary" onClick={handleSearch}>Search</button>
+                    <button type="button" className="btn btn-primary" onClick={() => handleSearch()}>Search</button>
                 </div>
+                <br></br>
                 <div>
-                    <h4>Sell a property</h4>
-                    <button type="button" className="btn btn-primary" onClick={handleSell}>Sell</button>
+                    <h4>My properties</h4>
+                    <button type="button" className="btn btn-primary" onClick={() => handleSell()}>Properties</button>
                 </div>
+                <br></br>
                 <div>
                     <h4>Requested Lands</h4>
-                    <button type="button" className="btn btn-primary" onClick={handleRequest}>Requested</button>
+                    <button type="button" className="btn btn-primary" onClick={() => handleRequest()}>Requested</button>
                 </div>
+                <br></br>
                 <div>
                     <h4>My Lands on Sale</h4>
-                    <button type="button" className="btn btn-primary" onClick={handleSale}>Lands</button>
+                    <button type="button" className="btn btn-primary" onClick={() => handleSale()}>Lands</button>
                 </div>
             </div>
         );

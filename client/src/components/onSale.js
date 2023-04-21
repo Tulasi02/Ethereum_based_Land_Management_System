@@ -2,10 +2,20 @@ import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
 import { FileEarmarkFill } from 'react-bootstrap-icons';
+import { useLocation, useNavigate } from 'react-router';
+import { ArrowLeft } from 'react-bootstrap-icons';
 
 const OnSale = () => {
+    
+    const navigate = useNavigate();
+    const location = useLocation();
+    let aadhaar;
+
+    if (location.state) {
+        aadhaar = location.state.aadhaar;
+    }
             
-    const [user, setUser] = useState({name: '', id: '', email: '', isMember: false});
+    const [user, setUser] = useState();
     const [lands, setLands] = useState([]);
     const [selected, setSelected] = useState(0);
     const [access, setAccess] = useState([]);
@@ -35,6 +45,10 @@ const OnSale = () => {
         }
         func();
     }, []);
+
+    const handleBack = () => {
+        navigate("/", {state: {aadhaar: aadhaar}});
+    }
 
     const handleChange2 = async (i, e) => {
         console.log(i, e);
@@ -90,6 +104,8 @@ const OnSale = () => {
 
     return (
         <div>
+            <button type="button" className="btn btn-primary" onClick={() => handleBack()}><ArrowLeft /></button>
+            <br></br><br></br>
             <h1>Lands on Sale</h1>
             <select className="bootstrap-select" onChange={handleChange}>
                 {lands.map((data, i) => (

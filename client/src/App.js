@@ -11,6 +11,7 @@ import SellLand from './components/sellLand';
 import Process  from './components/process';
 import RequestedLand from './components/requestedLand';
 import OnSale from './components/onSale';
+import AddUsers from './components/addUsers';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
               <Route path="/process" element={<Process />} />
               <Route path="/requested" element={<RequestedLand />} />
               <Route path="/onsale" element={<OnSale />} />
+              <Route path="/add" element={<AddUsers />} />
             </Routes>
           </div>
         </div>
