@@ -28,6 +28,7 @@ contract Land {
     }
     
     enum RequestStatus {
+        None,
         Pending,
         Accepted,
         Rejected,
@@ -81,6 +82,15 @@ contract Land {
             }
         }
         return 0;
+    }
+
+    function checkInArray(string memory _array, string memory _id) public view returns (bool) {
+        for (uint i = 0; i < _array.length; i++) {
+            if (keccak256(abi.encodePacked(array[i])) == keccak256(abi.encodePacked(value))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function getLandOwners(string memory _id) public view returns(string[] memory) {
@@ -164,12 +174,7 @@ contract Land {
     function auctionLand(string memory _aadhaar, string memory _id) public {
         for (uint i = 0; i < Lands[_id].status.length; i++) {
             if (Lands[_id].status[i] == ChangeStatus.None || Lands[_id].status[i] == ChangeStatus.Rejected) {
-                bool k = false;
-                for (uint j = 0; j < LandsforSale.length; j++) {
-                    if (keccak256(abi.encodePacked(LandsforSale[i])) == keccak256(abi.encodePacked(_id))) {
-                        k = true;
-                    }
-                }
+                bool k = checkInArray(LandsforSale, _id);
                 if (k == false) {
                     LandsforSale.push(_id);
                 }
@@ -186,23 +191,22 @@ contract Land {
     function getUserAssets(string memory _aadhaar) public view returns (string[] memory) {
         return UserAssets[_aadhaar];
     }
+
+    
     
     function requestLandDetails(string memory _id, string memory _aadhaar, string memory _seller) public {
-        // RequestStatus[] memory access = new RequestStatus[](Lands[_id].saleBy.length);
-        // for (uint i = 0; i < Lands[_id].saleBy.length; i++) {
-        //     access[i] = RequestStatus.Pending;
-        // }
-        // LandRequestAccess[_aadhaar][_id] = access;
-        // requestedLands[_aadhaar].push(_id);
-        // InterestedBuyers[_id].push(_aadhaar);
-        
-        if (LandRequestAccess.length == 0) {
-            LandRequestAccess[_aadhaar][_id] = new RequestStatus[](Lands[_id].ownerAadhaar.length);
+        RequestStatus[] memory access = new RequestStatus[](Lands[_id].saleBy.length);
+        for (uint i = 0; i < Lands[_id].saleBy.length; i++) {
+            if (LandRequestAccess[_aadhaar][_id][i] != RequestStatus.Pending) {
+                access[i] = LandRequestAccess[_aadhaar][_id][i];
+            }
+            else {
+                access[i] = RequestStatus.Pending;
+            }
         }
-        else {
-            int i = findIndex(Lands[_id].)
-            LandRequestAccess[_aadhaar][_id][]
-        }
+        LandRequestAccess[_aadhaar][_id] = access;
+        requestedLands[_aadhaar].push(_id);
+        InterestedBuyers[_id].push(_aadhaar);
     }
     
     function getLandRequestAccess(string memory _id, string memory _aadhaar) public view returns (string[] memory) {
