@@ -18,7 +18,6 @@ const Register = () => {
 
     const {REACT_APP_PROJECT_ID, REACT_APP_PROJECT_SECRET, REACT_APP_IPFS_API_ENDPOINT} = process.env;
     const [user, setUser] = useState();
-    const [landDoc, setLandDoc] = useState('');
     const [output, setOutput] = useState('');
     const authorization = "Basic " + btoa(REACT_APP_PROJECT_ID + ":" + REACT_APP_PROJECT_SECRET);
     
@@ -32,7 +31,6 @@ const Register = () => {
     useEffect(() => {
         const func = async () => {
             const web3 = new Web3(window.ethereum);
-            const account = await window.ethereum.request({method: 'eth_requestAccounts'});
             const networkId = await web3.eth.net.getId()
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
@@ -47,9 +45,8 @@ const Register = () => {
     }
 
     const handleRegister = async (e) => {
-        console.log("Register");
         e.preventDefault();
-        const {formAddress, price, formAadhaar, share, registeredBy} = e.target.elements;
+        const {formAddress, price, formAadhaar, share} = e.target.elements;
         const form = e.target;
         const files = (form[0]).files;
         if (!files || files.length === 0) {
@@ -57,20 +54,21 @@ const Register = () => {
         }
         const file = files[0];
         const result = await ipfs.add(file);
-        setLandDoc(result.path);
-        let owners = formAadhaar.value.split(' ');
-        let shares = share.value.split(' ').map(Number);
+        let owners = formAadhaar.value.split(' ').filter(d => d != '' || d != " ");
+        let shares = share.value.split(' ').filter(d => d != '' || d != " ").map(Number);
         const id = uuid();
         const web3 = new Web3(window.ethereum);
-        const networkId = await web3.eth.net.getId()
+        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+        const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        await contract.methods.registerLand(id, formAddress.value, registeredBy.value, new Date(), price.value, result.path, owners, shares, (owners.length > 1 ? true : false)).send({from: registeredBy.value});
+        const time = new Date();
+        await contract.methods.registerLand(id, formAddress.value, aadhaar, time.toString(), price.value, result.path, owners, shares, (owners.length > 1 ? true : false)).send({from: account[0]});
         setOutput("Successfully registered");
         document.getElementById("submit").disabled = true;
     }
 
-    if (user.isMember) {
+    if (user && user.isMember) {
         document.getElementById("navbar").innerHTML="";
     }
 
@@ -127,17 +125,6 @@ const Register = () => {
                     className="form-control"
                     placeholder="Share in percentage (if joint property use space else 100)"
                     required
-                    />
-                </div>
-                <div className="mb-3">
-                    <label>Metamask account</label>
-                    <input
-                    id="registeredBy"
-                    type="text"
-                    className="form-control"
-                    placeholder="Metamask account"
-                    value={user.account}
-                    disabled
                     />
                 </div>
                 <button type="submit" id="submit" className="btn btn-primary">Register</button>

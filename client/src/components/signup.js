@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Land from '../contracts/Land.json';
 import Web3 from 'web3';
 import { create as ipfsHttpClient} from 'ipfs-http-client';
@@ -22,7 +22,7 @@ const SignUp = () => {
     const address = Land.networks[networkId].address;
     const contract = new web3.eth.Contract(Land.abi, address);
     const user = await contract.methods.Users(aadhaar).call();
-    if (user.isMember) {
+    if (user && user.isMember) {
       document.getElementById("output").innerHTML = 'Already a Registered User , try <a href="/login">Login</a> instead';
     }
     else {

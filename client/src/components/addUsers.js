@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Web3 from 'web3';
 import Land from '../contracts/Land.json';
-import { FileEarmarkFill } from "react-bootstrap-icons";
 import { useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'react-bootstrap-icons';
 
@@ -16,12 +15,10 @@ const AddUsers = () => {
 
     const [user, setUser] = useState();   
     const [users, setUsers] = useState([]);
-    const [add, setAdd] = useState([]);
 
     useEffect(() => {
         const func = async () => {
             const web3 = new Web3(window.ethereum);
-            const account = await window.ethereum.request({method: 'eth_requestAccounts'});
             const networkId = await web3.eth.net.getId();
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
@@ -45,6 +42,7 @@ const AddUsers = () => {
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
         await contract.methods.addUser(ua).send({from: account[0]});
+        window.location.reload(true);
         navigate('/add', {state: {aadhaar: aadhaar}});
     };
 

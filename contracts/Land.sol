@@ -48,8 +48,14 @@ contract Land {
         ChangeStatus[] status;
         string[] saleBy;
     }
-    
-    struct changeDetails {
+
+    struct TransferDetails {
+        string id;
+        string oldAadhaar;
+        string newAadhaar;
+    }
+
+    struct OwnershipChange {
         string id;
         string oldAadhaar;
         string newAadhaar;
@@ -62,14 +68,13 @@ contract Land {
     mapping(string => string[]) public UserAssets;
     mapping(string => LandDetails) public Lands;
     mapping(string => string[]) public InterestedBuyers;
-    mapping(string => mapping(string => RequestStatus[])) public LandRequestAccess;
-    mapping(bool => string[]) public checkMembership;
+    mapping(string => mapping(string => mapping(string => RequestStatus))) public LandRequestAccess;
     mapping(string => string[]) public requestedLands;
-    mapping(uint => changeDetails) public changeMap;
     
     string[] public UsersRegistered;
-    string[] public LandsforSale;
-    uint[] public change;
+    string[] public LandsforSale; 
+    TransferDetails[] public TransferList;
+    OwnershipChange[] public ApprovedList;
     
     constructor() {
         owner = msg.sender;
@@ -84,9 +89,9 @@ contract Land {
         return 0;
     }
 
-    function checkInArray(string memory _array, string memory _id) public view returns (bool) {
+    function checkInArray(string[] memory _array, string memory _id) private pure returns (bool) {
         for (uint i = 0; i < _array.length; i++) {
-            if (keccak256(abi.encodePacked(array[i])) == keccak256(abi.encodePacked(value))) {
+            if (keccak256(abi.encodePacked(_array[i])) == keccak256(abi.encodePacked(_id))) {
                 return true;
             }
         }
@@ -117,6 +122,14 @@ contract Land {
         return names;
     }
 
+    function getOwnerEmails(string memory _id) public view returns (string[] memory) {
+        string[] memory emails = new string[](Lands[_id].ownerAadhaar.length);
+        for (uint i = 0; i < Lands[_id].ownerAadhaar.length; i++) {
+            emails[i] = Users[Lands[_id].ownerAadhaar[i]].email;
+        }
+        return emails;
+    }
+
     function getSellerNames(string memory _id) public view returns (string[] memory) {
         string[] memory names = new string[](Lands[_id].saleBy.length);
         for (uint i = 0; i < Lands[_id].saleBy.length; i++) {
@@ -128,7 +141,7 @@ contract Land {
     function getSellerEmail(string memory _id) public view returns (string[] memory) {
         string[] memory emails = new string[](Lands[_id].ownerAadhaar.length);
         for (uint i = 0; i < Lands[_id].ownerAadhaar.length; i++) {
-            emails[i] = Users[Lands[_id].ownerAadhaar[i]].name;
+            emails[i] = Users[Lands[_id].ownerAadhaar[i]].email;
         }
         return emails;
     }
@@ -172,16 +185,11 @@ contract Land {
     }
     
     function auctionLand(string memory _aadhaar, string memory _id) public {
-        for (uint i = 0; i < Lands[_id].status.length; i++) {
-            if (Lands[_id].status[i] == ChangeStatus.None || Lands[_id].status[i] == ChangeStatus.Rejected) {
-                bool k = checkInArray(LandsforSale, _id);
-                if (k == false) {
-                    LandsforSale.push(_id);
-                }
-                Lands[_id].saleBy.push(_aadhaar);
-                Lands[_id].status.push(ChangeStatus.None);
-            }
+        if (!checkInArray(LandsforSale, _aadhaar)) {
+            LandsforSale.push(_id);
         }
+        Lands[_id].saleBy.push(_aadhaar);
+        Lands[_id].status.push(ChangeStatus.None);
     }
     
     function getAllLandsforSale() public view returns (string[] memory) {
@@ -190,32 +198,17 @@ contract Land {
     
     function getUserAssets(string memory _aadhaar) public view returns (string[] memory) {
         return UserAssets[_aadhaar];
-    }
-
-    
+    }    
     
     function requestLandDetails(string memory _id, string memory _aadhaar, string memory _seller) public {
-        RequestStatus[] memory access = new RequestStatus[](Lands[_id].saleBy.length);
-        for (uint i = 0; i < Lands[_id].saleBy.length; i++) {
-            if (LandRequestAccess[_aadhaar][_id][i] != RequestStatus.Pending) {
-                access[i] = LandRequestAccess[_aadhaar][_id][i];
-            }
-            else {
-                access[i] = RequestStatus.Pending;
-            }
-        }
-        LandRequestAccess[_aadhaar][_id] = access;
+        LandRequestAccess[_aadhaar][_id][_seller] = RequestStatus.Pending;
         requestedLands[_aadhaar].push(_id);
         InterestedBuyers[_id].push(_aadhaar);
     }
     
-    function getLandRequestAccess(string memory _id, string memory _aadhaar) public view returns (string[] memory) {
-        string[] memory access = new string[](Lands[_id].saleBy.length);
-        for (uint i = 0; i < LandRequestAccess[_aadhaar][_id].length; i++) {
-            RequestStatus x = LandRequestAccess[_aadhaar][_id][i];
-            access[i] = (x == RequestStatus.Pending ? "Pending" : (x == RequestStatus.Accepted ? "Accepted" : (x == RequestStatus.Rejected ? "Pending" : "Sell")));
-        }
-        return access;
+    function getLandRequestAccess(string memory _id, string memory _aadhaar, string memory _seller) public view returns (string memory) {   
+        RequestStatus x = LandRequestAccess[_aadhaar][_id][_seller];
+        return (x == RequestStatus.None ? "None" : (x == RequestStatus.Pending ? "Pending" : (x == RequestStatus.Accepted ? "Accepted" : (x == RequestStatus.Rejected ? "Rejected" : "Sell"))));
     }
     
     function getRequestedLands(string memory _aadhaar) public view returns (string[] memory) {
@@ -223,8 +216,7 @@ contract Land {
     }
     
     function sellLand(string memory _id, string memory _aadhaar, string memory _seller) public {
-        uint i = findIndex(Lands[_id].saleBy, _seller);
-        LandRequestAccess[_aadhaar][_id][i] = RequestStatus.Sell;
+        LandRequestAccess[_aadhaar][_id][_seller] = RequestStatus.Sell;
     }
     
     function interested(string memory _id) public view returns (string[] memory, string[] memory) {
@@ -238,13 +230,11 @@ contract Land {
     }
     
     function requestApprove(string memory _aadhaar, string memory _id, string memory _seller) public {
-        uint i = findIndex(Lands[_id].saleBy, _seller);
-        LandRequestAccess[_aadhaar][_id][i] = RequestStatus.Accepted;
+        LandRequestAccess[_aadhaar][_id][_seller] = RequestStatus.Accepted;
     }
     
     function requestReject(string memory _aadhaar, string memory _id, string memory _seller) public {
-        uint i = findIndex(Lands[_id].saleBy, _seller);
-        LandRequestAccess[_aadhaar][_id][i] = RequestStatus.Rejected;
+        LandRequestAccess[_aadhaar][_id][_seller] = RequestStatus.Rejected;
     }
     
     function removeAsset(string memory _aadhaar, string memory _id) private {
@@ -255,9 +245,7 @@ contract Land {
     
     function removeRequestAccess(string memory _id, string memory _seller) private {
         for (uint i = 0; i < InterestedBuyers[_id].length; i++) {
-            uint j = findIndex(Lands[_id].saleBy, _seller);
-            LandRequestAccess[InterestedBuyers[_id][i]][_id][j] = LandRequestAccess[InterestedBuyers[_id][i]][_id][LandRequestAccess[InterestedBuyers[_id][i]][_id].length - 1];
-            LandRequestAccess[InterestedBuyers[_id][i]][_id].pop();
+            delete LandRequestAccess[InterestedBuyers[_id][i]][_id][_seller];
         }
     }
     
@@ -301,10 +289,40 @@ contract Land {
         requestedLands[_aadhaar][i] = requestedLands[_aadhaar][requestedLands[_aadhaar].length - 1];
         requestedLands[_aadhaar].pop();
     }
+
+    function removeFromTransferList(string memory _id, string memory _oldAadhaar, string memory _newAadhaar) private {
+        for (uint i = 0; i < TransferList.length; i++) {
+            if (keccak256(abi.encodePacked(TransferList[i].id)) == keccak256(abi.encodePacked(_id)) && keccak256(abi.encodePacked(TransferList[i].oldAadhaar)) == keccak256(abi.encodePacked(_oldAadhaar)) && keccak256(abi.encodePacked(TransferList[i].newAadhaar)) == keccak256(abi.encodePacked(_newAadhaar))) {
+                TransferList[i] = TransferList[TransferList.length - 1];
+            }
+        }
+        TransferList.pop();
+    }
     
-    function transfer(string memory _id, string memory _newAadhaar, string memory _oldAadhaar, bool _status, string memory _time, string memory approver) public {
+    function transferRequest(string memory _id, string memory _newAadhaar, string memory _oldAadhaar) public {
+        uint i = findIndex(Lands[_id].saleBy, _oldAadhaar);
+        Lands[_id].status[i] = ChangeStatus.Pending;
+        TransferList.push(TransferDetails(_id, _oldAadhaar, _newAadhaar));
+    }
+
+    function getAllTransferRequest() public view returns (string[] memory, string[] memory, string[] memory) {
+        uint l = TransferList.length;
+        string[] memory land = new string[](l);
+        string[] memory oldA = new string[](l);
+        string[] memory newA = new string[](l);
+        for (uint i = 0; i < l; i++) {
+            land[i] = TransferList[i].id;
+            oldA[i] = TransferList[i].oldAadhaar;
+            newA[i] = TransferList[i].newAadhaar;
+        }
+        return (land, oldA, newA);
+    }
+
+    function transfer(string memory _id, string memory _newAadhaar, string memory _oldAadhaar, bool _status, string memory _time, string memory _approver) public {
         if (_status == true) {
-            changeOwnership(_id, _newAadhaar, _oldAadhaar, _time, approver);
+            uint i = findIndex(Lands[_id].saleBy, _oldAadhaar);
+            Lands[_id].status[i] = ChangeStatus.Accepted;
+            ApprovedList.push(OwnershipChange(_id, _oldAadhaar, _newAadhaar, _time, _approver));
         }
         else {
             uint i = findIndex(Lands[_id].saleBy, _oldAadhaar);
@@ -312,18 +330,17 @@ contract Land {
         }
     }
     
-    function changeOwnership(string memory _id, string memory _newAadhaar, string memory _oldAadhaar, string memory _time, string memory _approver) private {
+    function changeOwnership(string memory _id, string memory _newAadhaar, string memory _oldAadhaar) public {
         uint i = findIndex(Lands[_id].ownerAadhaar, _oldAadhaar);
         check(_id, _newAadhaar, i);
         removeAsset(_oldAadhaar, _id);
         removeRequestAccess(_id, _oldAadhaar);
         removeFromRequestedLands(_id, _newAadhaar);
         changeInLandDetails(_id, _oldAadhaar);
+        removeFromTransferList(_id, _oldAadhaar, _newAadhaar);
         if (Lands[_id].saleBy.length == 0) {
             removeFromLandForSale(_id);
             delete InterestedBuyers[_id];
         }
-        change.push(change.length);
-        changeMap[change[change.length - 1]] = changeDetails(_id, _oldAadhaar, _newAadhaar, _time, _approver);
     }
 }

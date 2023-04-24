@@ -16,30 +16,38 @@ const RequestedLand = () => {
             
     const [user, setUser] = useState();
     const [lands, setLands] = useState([]);
-    const [buy, setBuy] = useState('');
 
     useEffect(() => {
         const func = async () => {
             const web3 = new Web3(window.ethereum);
-            const account = await window.ethereum.request({method: 'eth_requestAccounts'});
             const networkId = await web3.eth.net.getId();
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
             const userData = await contract.methods.Users(aadhaar).call();
             setUser(userData);
             const requested = await contract.methods.getRequestedLands(aadhaar).call();
-            const access = await contract.methods.getStatus().call();
-            let land,saleBy, owners, users;
+            let landsList = [];
+            let land, saleBy, sellerNames, sellerEmails, status, share;
             for (let i = 0; i < requested.length; i++) {
                 land = await contract.methods.Lands(requested[i]).call();
-                let saleBy = await contract.methods.getSaleBy(requested[i]).call()
-                let access = await contract.methods.getLandRequestAccess(requested[i], aadhaar).call();
-                let sellerName = await contract.methods.getSellerNames(requested[i]).call();
-                let sellerEmail = await contract.methods.getSellerEmail(requested[i]).call();
-                let owners = await contract.methods.getOwnerNames(requested[i]).call();
-                for (let j = 0; j < saleBy)
-                setLands([...lands, land]);
+                saleBy = await contract.methods.getSaleBy(requested[i]).call();
+                status = await contract.methods.getStatus(requested[i]).call();
+                sellerNames = await contract.methods.getSellerNames(requested[i]).call();
+                sellerEmails = await contract.methods.getSellerEmail(requested[i]).call();
+                land["owners"] = await contract.methods.getOwnerNames(requested[i]).call();
+                share = await contract.methods.getShares(requested[i]).call();
+                for (let j = 0; j < saleBy.length; j++) {
+                    land["seller"] = saleBy[j];
+                    land["sellerName"] = sellerNames[j];
+                    land["sellerEmail"] = sellerEmails[j];
+                    land["access"] = await contract.methods.getLandRequestAccess(requested[i], aadhaar, saleBy[j]).call();
+                    land["status"] = status[j];
+                    land["share"] = share[j];
+                    land["sellerA"] = await contract.methods.Users(seller).call().account;
+                    landsList.push(land);
+                }
             }
+            setLands(landsList);
         }
         func();
     }, []);
@@ -48,47 +56,55 @@ const RequestedLand = () => {
         navigate("/", {state: {aadhaar: aadhaar}});
     }
 
-    const handleBuy = async (id, seller, access, price, share) => {
+    const handleTransfer = async (id, seller) => {
         const web3 = new Web3(window.ethereum);
         const account = await window.ethereum.request({method: 'eth_requestAccounts'});
         const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        setBuy(id);
-        for (int i = 0; i < seller.length; i++) {
-            // let transfer = web3.eth.sendTransaction({from: account[0], to: owner, value: web3.utils.toWei(price, "ether")})
-            // .then(async (res) => {
-            //     if (res) {
-            //         await contract.methods.changeOwnership(buy, account[0]).send({from: account[0]});
-            //         alert("Land Ownership transfer done successfully");
-            //     }
-            // });
+        await contract.methods.transferRequest(id, aadhaar, seller).send({from: account[0]});
+        window.location.reload(true);
+        navigate("/requested", {state: {aadhaar: aadhaar}});
+    }
 
-        }
-        navigate("/requestedLands", {state: {aadhaar: aadhaar}});
-    };
+    const handleBuy = async (id, seller) => {
+        const web3 = new Web3(window.ethereum);
+        const account = await window.ethereum.request({method: 'eth_requestAccounts'});
+        const networkId = await web3.eth.net.getId();
+        const address = Land.networks[networkId].address;
+        const contract = new web3.eth.Contract(Land.abi, address);
+        let transfer = await web3.eth.sendTransaction({from: account[0], to: sellerA, value: web3.utils.toWei((price * share) / 100, "ether")})
+        .then(async (err, hash) => {
+            if (!err) {
+                await contract.methods.transfer(id, aadhaar, seller).send({from: account[0]});
+                alert("Land Ownership transfer done successfully");
+            }
+        });
+    }
 
     const TableRow = ({data}) => {
         if (data) {
             return data.map((data, i) => 
                 <tr key={i}>
                     <td>{i + 1}</td>
-                    <td>{data.ownerNames.join(' ')}</td>
+                    <td>{data.ownerNames}</td>
                     <td>{data.landAddress}</td>
                     <td>{data.price}</td>
+                    <td>{data.share}</td>
                     <td>{data.jointOwnership ? "Yes" : "No"}</td>
                     <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank" disabled={(data.access.indexOf("Accepted") !== -1 || data.access.indexOf("Sell") !== -1) ? false : true}><FileEarmarkFill /></a></td>
-                    <td>{data.sellerName.join(' ')}</td>
-                    <td>{data.sellerEmail.join(' ')}</td>
-                    <td>{data.access.join(' ')}</td>
-                    <td><button type="button" className="btn btn-primary" onClick={() => handleTransfer}>Request Transfer</button></td>
-                    <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.saleBy, data.access, data.price, data.share)} disabled={data.access.indexOf("Sell") !== -1 ? false : true}>Buy</button></td>
+                    <td>{data.sellerName}</td>
+                    <td>{data.sellerEmail}</td>
+                    <td>{data.access}</td>
+                    <td>{data.status}</td>
+                    <td><button type="button" className="btn btn-primary" onClick={() => handleTransfer(data.id, data.seller)} disabled={data.status === "None" && data.access === "Sell" ? false : true}>Request Transfer</button></td>
+                    <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.seller, data.sellerA)} disabled={data.status === "Accepted" && data.access === "Sell" ? false : true}>Buy</button></td>
                 </tr>
             );
         }
     }
 
-    if (user.isMember) {
+    if (user && user.isMember) {
         document.getElementById("navbar").innerHTML="";
     }
 
@@ -104,12 +120,14 @@ const RequestedLand = () => {
                         <th scope="col">Owners</th>  
                         <th scope="col">Address</th>
                         <th scope="col">Price</th>
+                        <th scope="col">Share</th>
                         <th scope="col">Joint Property</th>
                         <th scope="col">Document</th>
-                        <th scope="col">Sale By</th>                      
+                        <th scope="col">Seller</th>                      
                         <th scope="col">Seller Email</th>
                         <th scope="col">Access</th>
-                        <th scope="col">Buy</th>
+                        <th scope="col">Transfer Status</th>
+                        <th scope="col">Transfer Request</th>
                     </tr>
                 </thead>
                 <tbody>

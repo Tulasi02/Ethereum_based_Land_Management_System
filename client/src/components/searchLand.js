@@ -14,39 +14,38 @@ const SearchLand = () => {
     }
             
     const [user, setUser] = useState();
-    const [landforSale, setLandforSale] = useState([]);
     const [lands, setLands] = useState([]);
     
     useEffect(() => {
         const func = async () => {
             const web3 = new Web3(window.ethereum);
-            const account = await window.ethereum.request({method: 'eth_requestAccounts'});
             const networkId = await web3.eth.net.getId();
             const address = Land.networks[networkId].address;
             const contract = new web3.eth.Contract(Land.abi, address);
             const userData = await contract.methods.Users(aadhaar).call();
             setUser(userData);
             const sale = await contract.methods.getAllLandsforSale().call();
-            setLandforSale(sale);
-            let land, saleby, owners, users;
+            let landsList = [];
+            let land, saleby, sellerName, sellerEmail, shares;
             for (let i = 0; i < sale.length; i++) {
                 land = await contract.methods.Lands(sale[i]).call();
                 saleby = await contract.methods.getSaleBy(sale[i]).call();
-                owners = await contract.methods.getLandOwners(sale[i]).call();
-                let sellerName = await contract.methods.getSellerNames(sale[i]).call();
-                let sellerEmail = await contract.methods.getSellerEmail(sale[i]).call();
-                let owner = await contract.methods.getOwnerNames(sale[i]).call();
-                let shares = await contract.methods.getShares(sale[i]).call();
-                for (let i = 0; i < saleby.length; i++) {
-                    let x = owner.indexOf(saleby[i]);
-                    land["sellerName"] = sellerName[i];
-                    land["sellerEmail"] = sellerEmail[i];
-                    land["owner"] = ownerName[i];
-                    land["index"] = i;
-                    land["share"] = shares[x];
-                    setLands([...lands, land]);
+                sellerName = await contract.methods.getSellerNames(sale[i]).call();
+                sellerEmail  = await contract.methods.getSellerEmail(sale[i]).call();
+                land["owner"]  = await contract.methods.getOwnerNames(sale[i]).call();
+                shares = await contract.methods.getShares(sale[i]).call();
+                for (let j = 0; j < saleby.length; j++) {
+                    if (saleby[j] !== aadhaar) {
+                        land["seller"] = saleby[j];
+                        land["sellerName"] = sellerName[j];
+                        land["sellerEmail"] = sellerEmail[j];
+                        land["share"] = shares[j];
+                        land["access"] = await contract.methods.getLandRequestAccess(land.id, aadhaar, land["seller"]).call();
+                        landsList.push(land);
+                    }
                 }
             }
+            setLands(landsList);    
         }
         func();
     }, []);
@@ -55,28 +54,30 @@ const SearchLand = () => {
         navigate("/", {state: {aadhaar: aadhaar}});
     }
 
-    const handleCheck = async (id) => {
+    const handleCheck = async (id, seller) => {
         const web3 = new Web3(window.ethereum);
         const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        await contract.methods.requestLandDetails(id, user.aadhaar).send({from: user.account});
+        await contract.methods.requestLandDetails(id, aadhaar, seller).send({from: user.account});
         document.getElementById(id).innerHTML = "Requested";
         document.getElementById(id).disabled = true;
+        window.location.reload(true);
+        navigate("/search", {state: {aadhaar: aadhaar}});
     }
 
     const TableRow = ({data}) => {
         return data.map((data, i) => 
             <tr key={i}>
                 <td>{i + 1}</td>
-                <td>{data.landAddres}</td>
-                <td>{data.owner}</td>
+                <td>{data.landAddress}</td>
+                <td>{data.owner.join(' ')}</td>
                 <td>{data.sellerName}</td>
                 <td>{data.sellerEmail}</td>
                 <td>{data.price}</td>
                 <td>{data.share}</td>
                 <td>{data.jointOwnership ? "Yes" : "No"}</td>   
-                <td><button id={data.id} type="button" className="btn btn-primary" onClick={() => handleCheck(data.id)}>Request</button></td>
+                <td><button id={data.id} type="button" className="btn btn-primary" onClick={() => handleCheck(data.id, data.seller)} disabled={data.access === "None" ? false : true}>{data.access !== "None" ? "Requested" : "Reuqest"}</button></td>
             </tr>
         );
     }

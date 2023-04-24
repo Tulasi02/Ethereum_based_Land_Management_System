@@ -56,7 +56,7 @@ const Home = () => {
         navigate("/add", {state: {aadhaar: aadhaar}});
     }
 
-    if (user.isMember) {
+    if (user && user.isMember) {
         document.getElementById("navbar").innerHTML="";
         return (
             <div style={{width: '300px'}}>
