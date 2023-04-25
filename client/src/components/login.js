@@ -31,6 +31,7 @@ const Login = () => {
     const address = Land.networks[networkId].address;
     const contract = new web3.eth.Contract(Land.abi, address);
     const user = await contract.methods.Users(formaadhaar.value).call();
+    console.log(user);
     if (user && user.isMember) {
       if (user.account.toLowerCase() == account[0].toLowerCase()) { 
         navigate("/", {state: {aadhaar: formaadhaar.value}});

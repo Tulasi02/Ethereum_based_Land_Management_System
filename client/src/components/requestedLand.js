@@ -43,7 +43,7 @@ const RequestedLand = () => {
                     land["access"] = await contract.methods.getLandRequestAccess(requested[i], aadhaar, saleBy[j]).call();
                     land["status"] = status[j];
                     land["share"] = share[j];
-                    land["sellerA"] = await contract.methods.Users(seller).call().account;
+                    land["sellerA"] = await contract.methods.Users(saleBy[j]).call().account;
                     landsList.push(land);
                 }
             }
@@ -67,7 +67,7 @@ const RequestedLand = () => {
         navigate("/requested", {state: {aadhaar: aadhaar}});
     }
 
-    const handleBuy = async (id, seller) => {
+    const handleBuy = async (id, seller, sellerA, price, share) => {
         const web3 = new Web3(window.ethereum);
         const account = await window.ethereum.request({method: 'eth_requestAccounts'});
         const networkId = await web3.eth.net.getId();
@@ -98,7 +98,7 @@ const RequestedLand = () => {
                     <td>{data.access}</td>
                     <td>{data.status}</td>
                     <td><button type="button" className="btn btn-primary" onClick={() => handleTransfer(data.id, data.seller)} disabled={data.status === "None" && data.access === "Sell" ? false : true}>Request Transfer</button></td>
-                    <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.seller, data.sellerA)} disabled={data.status === "Accepted" && data.access === "Sell" ? false : true}>Buy</button></td>
+                    <td><button type="button" className="btn btn-primary" onClick={() => handleBuy(data.id, data.seller, data.sellerA, data.price, data.share)} disabled={data.status === "Accepted" && data.access === "Sell" ? false : true}>Buy</button></td>
                 </tr>
             );
         }
