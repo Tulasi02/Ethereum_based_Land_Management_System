@@ -56,7 +56,7 @@ const AddUsers = () => {
                 <td>{data.pan}</td>
                 <td>{data.email}</td>
                 <td>{data.phoneno}</td>
-                <td><img src={"https://ipfs.io/ipfs/" + data.image} /></td>
+                <td><img src={"https://ipfs.io/ipfs/" + data.image} width="70px" height="70px" /></td>
                 <td><button type="btn" className="btn btn-primary" onClick={() => handleAdd(data.aadhaar)}>Add</button></td>
             </tr>
         );

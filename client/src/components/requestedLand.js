@@ -27,7 +27,7 @@ const RequestedLand = () => {
             setUser(userData);
             const requested = await contract.methods.getRequestedLands(aadhaar).call();
             let landsList = [];
-            let land, saleBy, sellerNames, sellerEmails, status, share;
+            let land, saleBy, sellerNames, sellerEmails, status, share, userAccount;
             for (let i = 0; i < requested.length; i++) {
                 land = await contract.methods.Lands(requested[i]).call();
                 saleBy = await contract.methods.getSaleBy(requested[i]).call();
@@ -43,7 +43,8 @@ const RequestedLand = () => {
                     land["access"] = await contract.methods.getLandRequestAccess(requested[i], aadhaar, saleBy[j]).call();
                     land["status"] = status[j];
                     land["share"] = share[j];
-                    land["sellerA"] = await contract.methods.Users(saleBy[j]).call().account;
+                    userAccount = await contract.methods.Users(saleBy[j]).call();
+                    land["sellerA"] = userAccount.account;
                     landsList.push(land);
                 }
             }
@@ -73,11 +74,16 @@ const RequestedLand = () => {
         const networkId = await web3.eth.net.getId();
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
-        let transfer = await web3.eth.sendTransaction({from: account[0], to: sellerA, value: web3.utils.toWei((price * share) / 100, "ether")})
-        .then(async (err, hash) => {
+        price = ((Number(price) * share) / 100).toString();
+        let transfer = await web3.eth.sendTransaction({from: account[0], to: sellerA, value: web3.utils.toWei(price, "ether")})
+        .then(async (hash, err) => {
+            console.log(hash, err);
             if (!err) {
-                await contract.methods.transfer(id, aadhaar, seller).send({from: account[0]});
+                console.log("done");
+                await contract.methods.changeOwnership(id, aadhaar, seller).send({from: account[0]});
                 alert("Land Ownership transfer done successfully");
+                window.location.reload(true);
+                navigate("/requested", {state: {aadhaar: aadhaar}});
             }
         });
     }
@@ -92,7 +98,7 @@ const RequestedLand = () => {
                     <td>{data.price}</td>
                     <td>{data.share}</td>
                     <td>{data.jointOwnership ? "Yes" : "No"}</td>
-                    <td><a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank" disabled={(data.access.indexOf("Accepted") !== -1 || data.access.indexOf("Sell") !== -1) ? false : true}><FileEarmarkFill /></a></td>
+                    <td>{data.access === "Accepted" || data.access === "Sell" ? (<a href={"https://ipfs.io/ipfs/" + data.ipfsHash} target="_blank"><FileEarmarkFill /></a>)  : ""}</td>
                     <td>{data.sellerName}</td>
                     <td>{data.sellerEmail}</td>
                     <td>{data.access}</td>

@@ -321,7 +321,8 @@ contract Land {
     function transfer(string memory _id, string memory _newAadhaar, string memory _oldAadhaar, bool _status, string memory _time, string memory _approver) public {
         if (_status == true) {
             uint i = findIndex(Lands[_id].saleBy, _oldAadhaar);
-            Lands[_id].status[i] = ChangeStatus.Accepted;
+            Lands[_id].status[i] = ChangeStatus.Accepted;   
+            removeFromTransferList(_id, _oldAadhaar, _newAadhaar);
             ApprovedList.push(OwnershipChange(_id, _oldAadhaar, _newAadhaar, _time, _approver));
         }
         else {

@@ -58,6 +58,8 @@ const Process = () => {
         const contract = new web3.eth.Contract(Land.abi, address);  
         const time = new Date();
         await contract.methods.transfer(id, buyer, seller, (status === "Accepted" ? true : false), time.toString(), aadhaar).send({from: account[0]});
+        window.location.reload(true);
+        navigate("/process", {state: {aadhaar: aadhaar}});
     }
 
     const TableRow = ({data}) => {

@@ -27,7 +27,6 @@ const SellLand = () => {
             const userData = await contract.methods.Users(aadhaar).call();
             setUser(userData);
             const assets = await contract.methods.getUserAssets(aadhaar).call();
-            console.log(assets);
             let landsList = [];
             let land;
             for (let i = 0; i < assets.length; i++) {
@@ -84,7 +83,6 @@ const SellLand = () => {
             </tr>
         );
     }
-    // console.log(lands);
 
     if (user && user.isMember) {
         document.getElementById("navbar").innerHTML="";

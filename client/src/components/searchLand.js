@@ -77,7 +77,7 @@ const SearchLand = () => {
                 <td>{data.price}</td>
                 <td>{data.share}</td>
                 <td>{data.jointOwnership ? "Yes" : "No"}</td>   
-                <td><button id={data.id} type="button" className="btn btn-primary" onClick={() => handleCheck(data.id, data.seller)} disabled={data.access === "None" ? false : true}>{data.access !== "None" ? "Requested" : "Reuqest"}</button></td>
+                <td><button id={data.id} type="button" className="btn btn-primary" onClick={() => handleCheck(data.id, data.seller)} disabled={data.access === "None" ? false : true}>{data.access !== "None" ? "Requested" : "Request"}</button></td>
             </tr>
         );
     }
