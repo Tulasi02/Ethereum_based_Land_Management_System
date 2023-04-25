@@ -24,9 +24,11 @@ const AddUsers = () => {
             const contract = new web3.eth.Contract(Land.abi, address);
             setUser(await contract.methods.Users(aadhaar).call());
             const registered = await contract.methods.getRegisteredUsers().call();
+            let userList = [];
             for (let i = 0; i < registered.length; i++) {
-                setUsers([...users, await contract.methods.Users(registered[i]).call()]);
+                userList.push(await contract.methods.Users(registered[i]).call());
             }
+            setUsers(userList)
         }
         func();
     }, []);
