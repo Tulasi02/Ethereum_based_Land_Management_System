@@ -338,7 +338,6 @@ contract Land {
         removeRequestAccess(_id, _oldAadhaar);
         removeFromRequestedLands(_id, _newAadhaar);
         changeInLandDetails(_id, _oldAadhaar);
-        removeFromTransferList(_id, _oldAadhaar, _newAadhaar);
         if (Lands[_id].saleBy.length == 0) {
             removeFromLandForSale(_id);
             delete InterestedBuyers[_id];

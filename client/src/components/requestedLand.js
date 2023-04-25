@@ -75,17 +75,23 @@ const RequestedLand = () => {
         const address = Land.networks[networkId].address;
         const contract = new web3.eth.Contract(Land.abi, address);
         price = ((Number(price) * share) / 100).toString();
+        let txhash;
         let transfer = await web3.eth.sendTransaction({from: account[0], to: sellerA, value: web3.utils.toWei(price, "ether")})
         .then(async (hash, err) => {
             console.log(hash, err);
-            if (!err) {
-                console.log("done");
-                await contract.methods.changeOwnership(id, aadhaar, seller).send({from: account[0]});
-                alert("Land Ownership transfer done successfully");
-                window.location.reload(true);
-                navigate("/requested", {state: {aadhaar: aadhaar}});
+            if (hash) {
+                txhash = hash;
             }
         });
+        if (txhash) {
+                await contract.methods.changeOwnership(id, aadhaar, seller).send({from: account[0]});
+            // alert("Land Ownership transfer done successfully");
+            window.location.reload(true);
+            navigate("/requested", {state: {aadhaar: aadhaar}});
+        }
+        else {
+            alert("Fail");
+        }
     }
 
     const TableRow = ({data}) => {
